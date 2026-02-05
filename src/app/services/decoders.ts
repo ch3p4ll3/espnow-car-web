@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TelemetryMessage } from '../interfaces/telemetry';
-import { TELEMETRY_HEADER } from '../constants';
+import { MESSAGE_HEADER } from '../constants';
 
 
 @Injectable({
@@ -11,7 +11,7 @@ export class Decoders {
     const dv = new DataView(buffer);
     
     // Verify Header
-    if (dv.getUint8(0) !== TELEMETRY_HEADER) return null;
+    if (dv.getUint8(0) !== MESSAGE_HEADER) return null;
 
     let offset = 1;
 

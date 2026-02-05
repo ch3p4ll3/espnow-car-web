@@ -26,7 +26,7 @@
         <div class="flex flex-col items-center">
             <div class="flex justify-between w-full mb-4 px-2">
                 <span class="text-xs font-black tracking-widest text-slate-500 uppercase">System Limit</span>
-                <span class="text-xs font-mono text-cyan-400">{{maxSpeed}} units</span>
+                <span class="text-xs font-mono text-cyan-400">{{maxSpeed}} %</span>
             </div>
             <input type="text" pInputText [(ngModel)]="maxSpeed" 
                    class="w-24 text-center bg-slate-800 border-slate-700 text-white text-xl font-mono mb-6 rounded-lg focus:ring-cyan-500" />
@@ -38,9 +38,9 @@
         
         <div class="flex flex-col items-center gap-4 bg-slate-900/50 p-6 rounded-3xl border border-slate-800 shadow-inner">
             <span class="text-[10px] font-bold text-cyan-500 tracking-tighter uppercase">Motor L</span>
-            <input type="text" pInputText [(ngModel)]="telemetry.leftMotorSpeed" 
+            <input type="text" pInputText [(ngModel)]="command.leftMotorSpeed" 
                    class="w-16 text-center bg-slate-950 border-slate-800 text-cyan-400 font-mono text-sm rounded-md" />
-            <p-slider [(ngModel)]="telemetry.leftMotorSpeed" [min]="-100" [max]="100" orientation="vertical" class="h-72"></p-slider>
+            <p-slider [(ngModel)]="command.leftMotorSpeed" [min]="-100" [max]="100" orientation="vertical" class="h-72"></p-slider>
         </div>
 
         <div class="flex flex-col items-center gap-12">
@@ -58,23 +58,48 @@
 
             <div class="grid grid-cols-3 gap-3 p-4 bg-slate-900 rounded-3xl border border-slate-800 shadow-xl">
                 <div></div>
-                <button [class.bg-cyan-500]="isKeyPressed('ArrowUp')" class="w-14 h-14 bg-slate-800 hover:bg-slate-700 text-white rounded-xl shadow-lg border border-slate-700 flex items-center justify-center active:scale-95 transition-all" >
+                <button
+                    class="w-14 h-14 bg-slate-800 hover:bg-slate-700 text-white rounded-xl shadow-lg border border-slate-700 flex items-center justify-center active:scale-95 transition-all"
+                    (mousedown)="updateMotors(maxSpeed, maxSpeed)" 
+                    (mouseup)="emergencyStop()"
+                    (mouseleave)="emergencyStop()"
+                >
                     <i class="pi pi-chevron-up"></i>
                 </button>
                 <div></div>
                 
-                <button class="w-14 h-14 bg-slate-800 hover:bg-slate-700 text-white rounded-xl shadow-lg border border-slate-700 flex items-center justify-center active:scale-95 transition-all">
+                <button
+                    class="w-14 h-14 bg-slate-800 hover:bg-slate-700 text-white rounded-xl shadow-lg border border-slate-700 flex items-center justify-center active:scale-95 transition-all"
+                    (mousedown)="updateMotors(-maxSpeed, maxSpeed)" 
+                    (mouseup)="emergencyStop()"
+                    (mouseleave)="emergencyStop()"
+                >
                     <i class="pi pi-chevron-left"></i>
                 </button>
-                <button class="w-14 h-14 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-lg border border-red-400 flex items-center justify-center active:scale-90 transition-all">
+                <button
+                    class="w-14 h-14 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-lg border border-red-400 flex items-center justify-center active:scale-90 transition-all"
+                    (mousedown)="emergencyStop()" 
+                    (mouseup)="emergencyStop()"
+                    (mouseleave)="emergencyStop()"
+                >
                     <i class="pi pi-stop-circle text-xl"></i>
                 </button>
-                <button class="w-14 h-14 bg-slate-800 hover:bg-slate-700 text-white rounded-xl shadow-lg border border-slate-700 flex items-center justify-center active:scale-95 transition-all">
+                <button
+                    class="w-14 h-14 bg-slate-800 hover:bg-slate-700 text-white rounded-xl shadow-lg border border-slate-700 flex items-center justify-center active:scale-95 transition-all"
+                    (mousedown)="updateMotors(maxSpeed, -maxSpeed)" 
+                    (mouseup)="emergencyStop()"
+                    (mouseleave)="emergencyStop()"
+                >
                     <i class="pi pi-chevron-right"></i>
                 </button>
 
                 <div></div>
-                <button class="w-14 h-14 bg-slate-800 hover:bg-slate-700 text-white rounded-xl shadow-lg border border-slate-700 flex items-center justify-center active:scale-95 transition-all">
+                <button
+                    class="w-14 h-14 bg-slate-800 hover:bg-slate-700 text-white rounded-xl shadow-lg border border-slate-700 flex items-center justify-center active:scale-95 transition-all"
+                    (mousedown)="updateMotors(-maxSpeed, -maxSpeed)" 
+                    (mouseup)="emergencyStop()"
+                    (mouseleave)="emergencyStop()"
+                >
                     <i class="pi pi-chevron-down"></i>
                 </button>
             </div>
@@ -82,9 +107,9 @@
 
         <div class="flex flex-col items-center gap-4 bg-slate-900/50 p-6 rounded-3xl border border-slate-800 shadow-inner">
             <span class="text-[10px] font-bold text-cyan-500 tracking-tighter uppercase">Motor R</span>
-            <input type="text" pInputText [(ngModel)]="telemetry.rightMotorSpeed" 
+            <input type="text" pInputText [(ngModel)]="command.rightMotorSpeed" 
                    class="w-16 text-center bg-slate-950 border-slate-800 text-cyan-400 font-mono text-sm rounded-md" />
-            <p-slider [(ngModel)]="telemetry.rightMotorSpeed" [min]="-100" [max]="100" orientation="vertical" class="h-72"></p-slider>
+            <p-slider [(ngModel)]="command.rightMotorSpeed" [min]="-100" [max]="100" orientation="vertical" class="h-72"></p-slider>
         </div>
 
     </div>

@@ -4,8 +4,10 @@ import { Decoders } from '../../services/decoders';
 import { FormsModule } from '@angular/forms';
 import { SliderModule } from 'primeng/slider';
 import { InputTextModule } from 'primeng/inputtext';
-import { TOTAL_SIZE, TELEMETRY_HEADER } from '../../constants';
+import { TELEMETRY_SIZE, MESSAGE_HEADER, RAMP_STEP, TICK_RATE } from '../../constants';
 import { TelemetryMessage } from '../../interfaces/telemetry';
+import { CommandMessage } from '../../interfaces/command';
+import { Encoders } from '../../services/encoders';
 
 @Component({
   selector: 'app-home',
@@ -15,11 +17,17 @@ import { TelemetryMessage } from '../../interfaces/telemetry';
 })
 export class Home {
   public maxSpeed: number = 50;
+  public targetLeft: number = 0;
+  public targetRight: number = 0;
+
   public telemetry: TelemetryMessage;
+  public command: CommandMessage;
   public activeKeys = new Set<string>();
 
   private decoders = inject(Decoders);
+  private encoders = inject(Encoders);
   private port: any;
+  private rampInterval: any;
 
   constructor() {
     this.telemetry = {
@@ -35,6 +43,19 @@ export class Home {
       lon: 0,
       gpsSpeed: 0
     }
+
+    this.command = {
+      leftMotorDirection: true,
+      leftMotorSpeed: 0,
+      rightMotorDirection: true,
+      rightMotorSpeed: 0
+    }
+
+    this.startRampLoop();
+  }
+
+  ngOnDestroy() {
+    if (this.rampInterval) clearInterval(this.rampInterval);
   }
 
   public get is_connected(): boolean {
@@ -80,9 +101,9 @@ export class Home {
         accumulator = newBuf;
 
         // 2. Process all complete packets in the buffer
-        while (accumulator.length >= TOTAL_SIZE) {
+        while (accumulator.length >= TELEMETRY_SIZE) {
           // Find the header TELEMETRY_HEADER
-          const headerIndex = accumulator.indexOf(TELEMETRY_HEADER);
+          const headerIndex = accumulator.indexOf(MESSAGE_HEADER);
 
           if (headerIndex === -1) {
             accumulator = new Uint8Array(0); // No header found, clear buffer
@@ -93,14 +114,14 @@ export class Home {
             accumulator = accumulator.slice(headerIndex); // Discard junk before header
           }
 
-          if (accumulator.length >= TOTAL_SIZE) {
-            const packet = accumulator.slice(0, TOTAL_SIZE);
+          if (accumulator.length >= TELEMETRY_SIZE) {
+            const packet = accumulator.slice(0, TELEMETRY_SIZE);
             const decoded = this.decoders.decodeTelemetry(packet.buffer);
 
             if (decoded)
               this.telemetry = decoded;
             
-            accumulator = accumulator.slice(TOTAL_SIZE); // Remove processed packet
+            accumulator = accumulator.slice(TELEMETRY_SIZE); // Remove processed packet
           }
         }
       }
@@ -156,10 +177,49 @@ export class Home {
   }
 
   updateMotors(left: number, right: number) {
-    this.telemetry.leftMotorSpeed = left;
-    this.telemetry.rightMotorSpeed = right;
+    this.targetLeft = left;
+    this.targetRight = right;
+  }
 
-    // Call serial service to send the command
+  private startRampLoop() {
+    this.rampInterval = setInterval(() => {
+      this.applyRamp();
+    }, TICK_RATE);
+  }
+
+  private applyRamp() {
+    // Smoothly approach the target speed
+    this.command.leftMotorSpeed = this.approach(this.command.leftMotorSpeed, this.targetLeft, RAMP_STEP);
+    this.command.rightMotorSpeed = this.approach(this.command.rightMotorSpeed, this.targetRight, RAMP_STEP);
+
+    // if (this.is_connected) {
+    //   this.sendMotorCommand();
+    // }
+  }
+
+  private approach(current: number, target: number, step: number): number {
+    if (current < target) return Math.min(current + step, target);
+    if (current > target) return Math.max(current - step, target);
+    return target;
+  }
+
+  private async sendMotorCommand() {
+    const leftSpeed = Math.abs(this.command.leftMotorSpeed);
+    const rightSpeed = Math.abs(this.command.rightMotorSpeed);
+
+    let buffer = this.encoders.encodeCommandMessage({
+      leftMotorDirection: this.command.leftMotorSpeed > 0,
+      leftMotorSpeed: leftSpeed,
+      rightMotorDirection: this.command.rightMotorSpeed > 0,
+      rightMotorSpeed: rightSpeed
+    });
+
+
+    if (this.port?.writable) {
+      const writer = this.port.writable.getWriter();
+      await writer.write(new Uint8Array(buffer));
+      writer.releaseLock();
+    }
   }
 
   emergencyStop() {
