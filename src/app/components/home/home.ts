@@ -1,4 +1,4 @@
-import { Component, inject, HostListener } from '@angular/core';
+import { Component, inject, HostListener, NgZone, ChangeDetectorRef } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { Decoders } from '../../services/decoders';
 import { FormsModule } from '@angular/forms';
@@ -29,7 +29,10 @@ export class Home {
   private port: any;
   private rampInterval: any;
 
-  constructor() {
+  constructor(
+    private ngZone: NgZone,
+    private cdref: ChangeDetectorRef,
+  ) {
     this.telemetry = {
       leftMotorDirection: true,
       leftMotorSpeed: 0,
@@ -59,8 +62,8 @@ export class Home {
   }
 
   public get is_connected(): boolean {
-    // return this.port && this.port.conected === true;
-    return true;
+    return this.port && this.port.conected === true;
+    //return true;
   }
 
   public async onConnect(){
@@ -189,12 +192,15 @@ export class Home {
 
   private applyRamp() {
     // Smoothly approach the target speed
-    this.command.leftMotorSpeed = this.approach(this.command.leftMotorSpeed, this.targetLeft, RAMP_STEP);
-    this.command.rightMotorSpeed = this.approach(this.command.rightMotorSpeed, this.targetRight, RAMP_STEP);
+    this.ngZone.run(() => {
+      this.command.leftMotorSpeed = this.approach(this.command.leftMotorSpeed, this.targetLeft, RAMP_STEP);
+      this.command.rightMotorSpeed = this.approach(this.command.rightMotorSpeed, this.targetRight, RAMP_STEP);
+      this.cdref.detectChanges();
+    });
 
-    // if (this.is_connected) {
-    //   this.sendMotorCommand();
-    // }
+    if (this.is_connected) {
+      this.sendMotorCommand();
+    }
   }
 
   private approach(current: number, target: number, step: number): number {
