@@ -13,12 +13,13 @@ export class Encoders {
     view.setUint8(0, 0xAA);
 
     // Pack Left Motor
-    view.setUint8(0, Number(msg.leftMotorDirection));
-    view.setUint16(1, msg.leftMotorSpeed, true); // Little-endian
+    view.setUint8(1, Number(msg.leftMotorDirection));
+
+    view.setUint16(2, msg.leftMotorSpeed, true); // Little-endian
 
     // Pack Right Motor
-    view.setUint8(3, Number(msg.rightMotorDirection));
-    view.setUint16(4, msg.rightMotorSpeed, true); // Little-endian
+    view.setUint8(4, Number(msg.rightMotorDirection));
+    view.setUint16(5, msg.rightMotorSpeed, true); // Little-endian
 
     return buffer;
   }

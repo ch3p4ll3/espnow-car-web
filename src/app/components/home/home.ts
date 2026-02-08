@@ -62,7 +62,7 @@ export class Home {
   }
 
   public get is_connected(): boolean {
-    return this.port && this.port.conected === true;
+    return this.port;
     //return true;
   }
 
