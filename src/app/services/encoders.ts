@@ -10,16 +10,15 @@ export class Encoders {
     const buffer = new ArrayBuffer(COMMAND_SIZE);
     const view = new DataView(buffer);
 
-    view.setUint8(0, 0xAA);
+    view.setUint8(0, MESSAGE_HEADER);
 
-    // Pack Left Motor
+    // Left motor
     view.setUint8(1, Number(msg.leftMotorDirection));
+    view.setUint16(2, msg.leftMotorSpeed, true);
 
-    view.setUint16(2, msg.leftMotorSpeed, true); // Little-endian
-
-    // Pack Right Motor
+    // Right motor
     view.setUint8(4, Number(msg.rightMotorDirection));
-    view.setUint16(5, msg.rightMotorSpeed, true); // Little-endian
+    view.setUint16(5, msg.rightMotorSpeed, true);
 
     return buffer;
   }

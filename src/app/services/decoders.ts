@@ -1,63 +1,29 @@
 import { Injectable } from '@angular/core';
 import { TelemetryMessage } from '../interfaces/telemetry';
-import { MESSAGE_HEADER } from '../constants';
-
+import { MESSAGE_HEADER, TELEMETRY_SIZE } from '../constants';
 
 @Injectable({
   providedIn: 'root',
 })
 export class Decoders {
   decodeTelemetry(buffer: ArrayBuffer): TelemetryMessage | null {
+    if (buffer.byteLength < TELEMETRY_SIZE) return null;
+
     const dv = new DataView(buffer);
-    
-    // Verify Header
     if (dv.getUint8(0) !== MESSAGE_HEADER) return null;
 
-    let offset = 1;
-
-    // ---- left motor ----
-    const leftMotorDirection = dv.getUint8(offset) !== 0;
-    offset += 1;
-
-    offset += 1; // padding (uint16 alignment)
-
-    const leftMotorSpeed = dv.getUint16(offset, true);
-    offset += 2;
-
-    const trueLeftSpeed = dv.getFloat32(offset, true);
-    offset += 4;
-
-    // ---- right motor ----
-    const rightMotorDirection = dv.getUint8(offset) !== 0;
-    offset += 1;
-
-    offset += 1; // padding (uint16 alignment)
-
-    const rightMotorSpeed = dv.getUint16(offset, true);
-    offset += 2;
-
-    const trueRightSpeed = dv.getFloat32(offset, true);
-    offset += 4;
-
-    // ---- GPS ----
-    const lat = dv.getFloat64(offset, true);
-    offset += 8;
-
-    const lon = dv.getFloat64(offset, true);
-    offset += 8;
-
-    const gpsSpeed = dv.getFloat64(offset, true);
-
     return {
-        leftMotorDirection,
-        leftMotorSpeed,
-        trueLeftSpeed,
-        rightMotorDirection,
-        rightMotorSpeed,
-        trueRightSpeed,
-        lat,
-        lon,
-        gpsSpeed
+      leftMotorDirection:  dv.getUint8(1) !== 0,
+      leftMotorSpeed:      dv.getUint16(2, true),
+      trueLeftSpeed:       dv.getFloat32(4, true),
+
+      rightMotorDirection: dv.getUint8(8) !== 0,
+      rightMotorSpeed:     dv.getUint16(9, true),
+      trueRightSpeed:      dv.getFloat32(11, true),
+
+      lat:                 dv.getFloat64(15, true),
+      lon:                 dv.getFloat64(23, true),
+      gpsSpeed:            dv.getFloat64(31, true),
     };
   }
 }
